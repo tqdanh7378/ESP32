@@ -1,16 +1,10 @@
-
-#ifdef ESP32
-  #include <WiFi.h>
-  #include <AsyncTCP.h>
-#else
-  #include <ESP8266WiFi.h>
-  #include <ESPAsyncTCP.h>
-#endif
+#include <WiFi.h>
+#include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
 // Setup Wifi
-const char* ssid = "Tan Du";
-const char* password = "01679629330@@";
+const char* ssid = "Phuc";
+const char* password = "123456789";
 
 // HTML web page
 const char index_html[] PROGMEM = R"rawliteral(
@@ -450,7 +444,6 @@ const char index_html[] PROGMEM = R"rawliteral(
         let leftBtn = document.querySelector('#button-left');
         let downBtn = document.querySelector('#button-down');
         let rightBtn = document.querySelector('#button-right');
-
         if (!manualMode.checked) {
             upBtn.disabled = true;
             downBtn.disabled = true;
@@ -458,10 +451,25 @@ const char index_html[] PROGMEM = R"rawliteral(
             rightBtn.disabled = true;
             voiphun2.disabled = true;
         }
-
         autoMode.addEventListener('change', () => {
             if (autoMode.checked) {
                 console.log("Checkbox is checked");
+                if(manualMode.checked)
+                {
+                    manualMode.checked = false;
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("GET", "/switchMode3_OFF", true);
+                    xhr.send();
+                    
+
+                }
+                if(voiphun2.checked)
+                {   
+                    voiphun2.checked = false;
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("GET", "/switchMode4_OFF", true);
+                    xhr.send();
+                }
             } else {
                 console.log("Checkbox is unchecked");
                 clearInterval(interval);
@@ -469,11 +477,9 @@ const char index_html[] PROGMEM = R"rawliteral(
                 inputHour.value = 0;
                 inputMinute.value = 0;
                 inputSecond.value = 0;
-
                 var xhr = new XMLHttpRequest();
                 xhr.open("GET", "/switchMode1_OFF", true);
                 xhr.send();
-
                 if(voiphun1.checked)
                 {
                     voiphun1.checked = false;
@@ -483,29 +489,40 @@ const char index_html[] PROGMEM = R"rawliteral(
                 }
             }
         })
-
         manualMode.addEventListener('change', function () {
-            if (this.checked) {
+            if (manualMode.checked) {
                 upBtn.disabled = false;
                 downBtn.disabled = false;
                 leftBtn.disabled = false;
                 rightBtn.disabled = false;
                 voiphun2.disabled = false;
+                if(autoMode.checked)
+                {
+                    autoMode.checked = false;
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("GET", "/switchMode1_OFF", true);
+                    xhr.send();
+                    
+                }
+                if(voiphun1.checked)
+                {
+                    voiphun1.checked = false;
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("GET", "/switchMode1_OFF", true);
+                    xhr.send();
+                }
             } else {
                 upBtn.disabled = true;
                 downBtn.disabled = true;
                 leftBtn.disabled = true;
                 rightBtn.disabled = true;
-
                 if(voiphun2.checked) {
                     voiphun2.checked = false;
                     var xhr = new XMLHttpRequest();
                     xhr.open("GET", "/switchMode4_OFF", true);
                     xhr.send();
                 }
-
                 voiphun2.disabled = true;
-
             }
         })
         
@@ -517,34 +534,48 @@ const char index_html[] PROGMEM = R"rawliteral(
             let seconds = inputSecond.value;
             let duration = parseInt(hours) * 3600 + parseInt(minutes) * 60 + parseInt(seconds);
             startTimer(duration, shownTimeCountDown)
-
             autoMode.checked = true;
             var xhr = new XMLHttpRequest();
             xhr.open("GET", "/switchMode1_ON", true);
             xhr.send();
-
-
-            voiphun1.checked = true;
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", "/switchMode2_ON", true);
-            xhr.send();
+            if(manualMode.checked)
+            {
+                manualMode.checked = false;
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", "/switchMode3_OFF", true);
+                xhr.send();
+            }
+            if(voiphun2.checked)
+            {
+                voiphun2.checked = false;
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", "/switchMode4_OFF", true);
+                xhr.send();
+            }
+            if(voiphun1.checked)
+            {
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", "/switchMode2_ON", true);
+                xhr.send();
+            }
+            if(!voiphun1.checked)
+            {
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", "/switchMode2_OFF", true);
+                xhr.send();
+            }
         }
-
         function startTimer(duration, display) {
             var timer = duration, hours, minutes, seconds;
-
             interval = setInterval(
                 function () {
                     hours = parseInt(timer / 3600)
                     minutes = parseInt(timer % 3600 / 60)
                     seconds = parseInt(timer % 60);
-
                     hours = hours < 10 ? "0" + hours : hours;
                     minutes = minutes < 10 ? "0" + minutes : minutes;
                     seconds = seconds < 10 ? "0" + seconds : seconds;
-
                     display.textContent = "ROBOT SẼ DỪNG SAU: " + hours + ":" + minutes + ":" + seconds;
-
                     // Auto Mode: OFF
                     if (--timer < 0) {
                         clearInterval(interval);
@@ -555,21 +586,17 @@ const char index_html[] PROGMEM = R"rawliteral(
                         inputHour.value = 0;
                         inputMinute.value = 0;
                         inputSecond.value = 0;
-
                         // Send HTTP_GET request turn off Auto mode & Motor
                         var xhr = new XMLHttpRequest();
                         xhr.open("GET", "/switchMode1_OFF", true);
                         xhr.send();
-
                         var xhr = new XMLHttpRequest();
                         xhr.open("GET", "/switchMode2_OFF", true);
                         xhr.send();
                     }
                 }, 1000);
         }
-
         // Footer time
-
         function startTime() {
             const today = new Date();
             let h = today.getHours();
@@ -580,7 +607,6 @@ const char index_html[] PROGMEM = R"rawliteral(
             document.getElementById('fter').innerHTML = h + ":" + m + ":" + s;
             setTimeout(startTime, 1000);
         }
-
         function checkTime(i) {
             if (i < 10) { i = "0" + i };  // Add zero in front of numbers < 10
             return i;
@@ -592,17 +618,16 @@ const char index_html[] PROGMEM = R"rawliteral(
 			xhr.open("GET", "/" + x, true);
 			xhr.send();
 		}
-
     function Change_State_Checkbox(element) {
-			var xhr = new XMLHttpRequest();
-			if(element.checked) {
+    var xhr = new XMLHttpRequest();
+    if(element.checked) {
         xhr.open("GET", "/" + element.id + "_ON", true); 
-        }
-			else {
+    }
+    else {
         xhr.open("GET", "/" + element.id + "_OFF", true);
-        }
-			xhr.send();
-		}
+    }
+    xhr.send();
+    }
     </script>
 </body>
 </html>)rawliteral";
@@ -635,8 +660,8 @@ void setup() {
   server.on("/ON_UP", HTTP_GET, [] (AsyncWebServerRequest *request) {
     Serial.print("ON_UP\n");
     // Send UART signal
-    Serial2.write("on up");
-    Serial.print("Sending UART signal: ON_UP\n");
+    Serial2.write("up 1");
+    Serial.print("Sending UART signal: up 1\n");
     
     request->send(200, "text/plain", "ok");
   });
@@ -645,8 +670,8 @@ void setup() {
   server.on("/OFF_UP", HTTP_GET, [] (AsyncWebServerRequest *request) {
     Serial.print("OFF_UP\n");
     // Send UART signal
-    Serial2.write("off up");
-    Serial.print("Sending UART signal: OFF_UP\n");
+    Serial2.write("up 0");
+    Serial.print("Sending UART signal: up 0\n");
 
     request->send(200, "text/plain", "ok");
   });
@@ -655,8 +680,8 @@ void setup() {
   server.on("/ON_DOWN", HTTP_GET, [] (AsyncWebServerRequest *request) {
     Serial.print("ON_DOWN\n");
     // Send UART signal
-    Serial2.write("on down");
-    Serial.print("Sending UART signal: ON_DOWN\n");
+    Serial2.write("down 1");
+    Serial.print("Sending UART signal: down 1\n");
 
     request->send(200, "text/plain", "ok");
   });
@@ -665,8 +690,8 @@ void setup() {
   server.on("/OFF_DOWN", HTTP_GET, [] (AsyncWebServerRequest *request) {
     Serial.print("OFF_DOWN\n");
     // Send UART signal
-    Serial2.write("off down");
-    Serial.print("Sending UART signal: OFF_DOWN\n");
+    Serial2.write("down 0");
+    Serial.print("Sending UART signal: down 0\n");
 
     request->send(200, "text/plain", "ok");
   });
@@ -675,8 +700,8 @@ void setup() {
   server.on("/ON_LEFT", HTTP_GET, [] (AsyncWebServerRequest *request) {
     Serial.print("ON_LEFT\n");
     // Send UART signal
-    Serial2.write("on left");
-    Serial.print("Sending UART signal: ON_LEFT\n");
+    Serial2.write("left 1");
+    Serial.print("Sending UART signal: left 1\n");
 
     request->send(200, "text/plain", "ok");
   });
@@ -685,8 +710,8 @@ void setup() {
   server.on("/OFF_LEFT", HTTP_GET, [] (AsyncWebServerRequest *request) {
     Serial.print("OFF_LEFT\n");
     // Send UART signal
-    Serial2.write("off left");
-    Serial.print("Sending UART signal: OFF_LEFT\n");
+    Serial2.write("left 0");
+    Serial.print("Sending UART signal: left 0\n");
 
     request->send(200, "text/plain", "ok");
   });
@@ -695,8 +720,8 @@ void setup() {
   server.on("/ON_RIGHT", HTTP_GET, [] (AsyncWebServerRequest *request) {
     Serial.print("ON_RIGHT\n");
     // Send UART signal
-    Serial2.write("on right");
-    Serial.print("Sending UART signal: ON_RIGHT\n");
+    Serial2.write("right 1");
+    Serial.print("Sending UART signal: right 1\n");
 
     request->send(200, "text/plain", "ok");
   });
@@ -705,8 +730,8 @@ void setup() {
   server.on("/OFF_RIGHT", HTTP_GET, [] (AsyncWebServerRequest *request) {
     Serial.print("OFF_RIGHT\n");
     // Send UART signal
-    Serial2.write("off right");
-    Serial.print("Sending UART signal: OFF_RIGHT\n");
+    Serial2.write("right 0");
+    Serial.print("Sending UART signal: right 0\n");
     
     request->send(200, "text/plain", "ok");
   });
@@ -715,8 +740,8 @@ void setup() {
   server.on("/switchMode1_ON", HTTP_GET, [] (AsyncWebServerRequest *request) {
     Serial.print("AUTO MODE: ON\n");
     // Send UART signal
-    Serial2.write("on auto");
-    Serial.print("Sending UART signal: ON_AUTO\n");
+    Serial2.write("auto 1");
+    Serial.print("Sending UART signal: auto 1\n");
 
     request->send(200, "text/plain", "ok");
   });
@@ -725,28 +750,28 @@ void setup() {
   server.on("/switchMode1_OFF", HTTP_GET, [] (AsyncWebServerRequest *request) {
     Serial.print("AUTO MODE: OFF\n");
     // Send UART signal
-    Serial2.write("off auto");
-    Serial.print("Sending UART signal: OFF_AUTO\n");
+    Serial2.write("auto 0");
+    Serial.print("Sending UART signal: auto 0\n");
     
     request->send(200, "text/plain", "ok");
   });
 
   // Receive an HTTP GET request - Motor Checkbox
   server.on("/switchMode2_ON", HTTP_GET, [] (AsyncWebServerRequest *request) {
-    Serial.print("MOTOR: ON\n");
+    Serial.print("MOTOR1: ON\n");
     // Send UART signal
-    Serial2.write("on motor");
-    Serial.print("Sending UART signal: ON_MOTOR\n");
+    Serial2.write("motor1 1");
+    Serial.print("Sending UART signal: motor1 1\n");
 
     request->send(200, "text/plain", "ok");
   });
 
   // Receive an HTTP GET request - Motor Checkbox
   server.on("/switchMode2_OFF", HTTP_GET, [] (AsyncWebServerRequest *request) {
-    Serial.print("MOTOR: OFF\n");
+    Serial.print("MOTOR1: OFF\n");
     // Send UART signal
-    Serial2.write("off motor");
-    Serial.print("Sending UART signal: OFF_MOTOR\n");
+    Serial2.write("motor1 0");
+    Serial.print("Sending UART signal: motor1 0\n");
     
     request->send(200, "text/plain", "ok");
   });
@@ -754,12 +779,20 @@ void setup() {
   // Receive an HTTP GET request - MANUAL Checkbox
   server.on("/switchMode3_ON", HTTP_GET, [] (AsyncWebServerRequest *request) {
     Serial.print("MANUAL MODE: ON\n");
+    // Send UART signal
+    Serial2.write("manual 1");
+    Serial.print("Sending UART signal: manual 1\n");
+
     request->send(200, "text/plain", "ok");
   });
 
   // Receive an HTTP GET request - MANUAL Checkbox
   server.on("/switchMode3_OFF", HTTP_GET, [] (AsyncWebServerRequest *request) {
     Serial.print("MANUAL MODE: OFF\n");
+    // Send UART signal
+    Serial2.write("manual 0");
+    Serial.print("Sending UART signal: manual 0\n");
+
     request->send(200, "text/plain", "ok");
   });
 
@@ -767,8 +800,8 @@ void setup() {
   server.on("/switchMode4_ON", HTTP_GET, [] (AsyncWebServerRequest *request) {
     Serial.print("MOTOR: ON\n");
     // Send UART signal
-    Serial2.write("on motor");
-    Serial.print("Sending UART signal: ON_MOTOR\n");
+    Serial2.write("motor2 1");
+    Serial.print("Sending UART signal: motor2 1\n");
 
     request->send(200, "text/plain", "ok");
   });
@@ -777,8 +810,8 @@ void setup() {
   server.on("/switchMode4_OFF", HTTP_GET, [] (AsyncWebServerRequest *request) {
     Serial.print("MOTOR: OFF\n");
     // Send UART signal
-    Serial2.write("off motor");
-    Serial.print("Sending UART signal: OFF_MOTOR\n");
+    Serial2.write("motor2 0");
+    Serial.print("Sending UART signal: motor2 0\n");
     
     request->send(200, "text/plain", "ok");
   });
